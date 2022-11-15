@@ -316,6 +316,7 @@ public class Company extends JFrame implements ActionListener {
             Vector<String> ShowEmpDependent = new Vector<String>();
             String showEmpDependentStmt = "";
             try {
+                count = 1;
                 String columnName = model.getColumnName(2);
                 if (columnName == "SSN") {
                     for (int i = 0; i < table.getRowCount(); i++) {
@@ -323,37 +324,40 @@ public class Company extends JFrame implements ActionListener {
                             ShowEmpDependent.add((String) table.getValueAt(i, 2));
                         }
                     }
-                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
-                        for (int k = 0; k < model.getRowCount(); k++) {
-                            if (table.getValueAt(k, 0) == Boolean.TRUE) {
-                                model.removeRow(k);
-                                totalCount.setText(String.valueOf(table.getRowCount()));
-                            }
-                        }
-                    }
+
+                    System.out.println(model.getRowCount());
+//                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
+//                        for (int k = 0; k < model.getRowCount(); k++) {
+//                            if (table.getValueAt(k, 0) == Boolean.TRUE) {
+//                                model.removeRow(k);
+//                                totalCount.setText(String.valueOf(table.getRowCount()));
+//                            }
+//                        }
+//                    }
                     for (int i = 0; i < ShowEmpDependent.size(); i++) {
                         showEmpDependentStmt = "SELECT * FROM DEPENDENT WHERE Essn=?";
                         PreparedStatement p = conn.prepareStatement(showEmpDependentStmt);
                         p.clearParameters();
                         p.setString(1, String.valueOf(ShowEmpDependent.get(i)));
-                        //s = conn.createStatement();
+                        s = conn.createStatement();
                         r = p.executeQuery();
-                    }
+                        ResultSetMetaData rsmd2 = r.getMetaData();
+                        int columnCnt = rsmd2.getColumnCount();
+                        int rowCnt = table.getRowCount();
 
-                    ResultSetMetaData rsmd2 = r.getMetaData();
-                    int columnCnt = rsmd2.getColumnCount();
-                    int rowCnt = table.getRowCount();
 
-                    while (r.next()) {
-                        Vector<Object> tuple = new Vector<Object>();
-                        tuple.add(false);
-                        for (int i = 1; i < columnCnt + 1; i++) {
-                            tuple.add(r.getString(rsmd2.getColumnName(i)));
+                        while (r.next()) {
+                            Vector<Object> tuple = new Vector<Object>();
+                            tuple.add(false);
+                            for (int j = 1; j < columnCnt + 1; j++) {
+                                tuple.add(r.getString(rsmd2.getColumnName(j)));
+                            }
+                            model.addRow(tuple);
+                            rowCnt++;
                         }
-                        model.addRow(tuple);
-                        rowCnt++;
                     }
-                    totalCount.setText(String.valueOf(rowCnt));
+                    //System.out.println(ShowEmpDependent.size());
+                    //totalCount.setText(String.valueOf(rowCnt));
                 }
             }catch(SQLException ee){
                 System.out.println("actionPerformed err : " + ee);
@@ -368,14 +372,13 @@ public class Company extends JFrame implements ActionListener {
             //revalidate();
 
         }else if (model.getColumnName(2) != "SSN"){
-                JOptionPane.showMessageDialog(null, "가족 검색을 위해서는 SSN을 체크해주세요");
+                JOptionPane.showMessageDialog(null, "가족 검색을 위해서는 NAME, SSN 항목을 모두 체크해주세요.");
         }
         // DELETE
         if (e.getSource() == Delete_Button) {
             Vector<String> delete_ssn = new Vector<String>();
 
             try {
-
                 String columnName = model.getColumnName(2);
                 if (columnName == "SSN") {
                     for (int i = 0; i < table.getRowCount(); i++) {
