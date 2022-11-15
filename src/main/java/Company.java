@@ -305,7 +305,7 @@ public class Company extends JFrame implements ActionListener {
                 ScPane.setPreferredSize(new Dimension(1100, 400));
                 panel.add(ScPane);
                 add(panel, BorderLayout.CENTER);
-                //revalidate();
+                revalidate();
 
             } else {
                 JOptionPane.showMessageDialog(null, "검색 항목을 한개 이상 선택하세요.");
@@ -325,15 +325,15 @@ public class Company extends JFrame implements ActionListener {
                         }
                     }
 
-                    System.out.println(model.getRowCount());
-//                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
-//                        for (int k = 0; k < model.getRowCount(); k++) {
-//                            if (table.getValueAt(k, 0) == Boolean.TRUE) {
-//                                model.removeRow(k);
-//                                totalCount.setText(String.valueOf(table.getRowCount()));
-//                            }
-//                        }
-//                    }
+                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
+                        for (int k = 0; k < model.getRowCount(); k++) {
+                            if (table.getValueAt(k, 0) == Boolean.TRUE) {
+                                model.removeRow(k);
+                                totalCount.setText(String.valueOf(table.getRowCount()));
+                            }
+                        }
+                    }
+                    model.setNumRows(0);
                     for (int i = 0; i < ShowEmpDependent.size(); i++) {
                         showEmpDependentStmt = "SELECT * FROM DEPENDENT WHERE Essn=?";
                         PreparedStatement p = conn.prepareStatement(showEmpDependentStmt);
@@ -341,10 +341,10 @@ public class Company extends JFrame implements ActionListener {
                         p.setString(1, String.valueOf(ShowEmpDependent.get(i)));
                         s = conn.createStatement();
                         r = p.executeQuery();
+
                         ResultSetMetaData rsmd2 = r.getMetaData();
                         int columnCnt = rsmd2.getColumnCount();
                         int rowCnt = table.getRowCount();
-
 
                         while (r.next()) {
                             Vector<Object> tuple = new Vector<Object>();
@@ -355,9 +355,8 @@ public class Company extends JFrame implements ActionListener {
                             model.addRow(tuple);
                             rowCnt++;
                         }
+                        totalCount.setText(String.valueOf(rowCnt));
                     }
-                    //System.out.println(ShowEmpDependent.size());
-                    //totalCount.setText(String.valueOf(rowCnt));
                 }
             }catch(SQLException ee){
                 System.out.println("actionPerformed err : " + ee);
@@ -369,7 +368,7 @@ public class Company extends JFrame implements ActionListener {
             ScPane.setPreferredSize(new Dimension(1100, 400));
             panel.add(ScPane);
             add(panel, BorderLayout.CENTER);
-            //revalidate();
+            revalidate();
 
         }else if (model.getColumnName(2) != "SSN"){
                 JOptionPane.showMessageDialog(null, "가족 검색을 위해서는 NAME, SSN 항목을 모두 체크해주세요.");
