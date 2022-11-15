@@ -32,6 +32,7 @@ public class Company extends JFrame implements ActionListener {
     private static final int BOOLEAN_COLUMN = 0;
     private int NAME_COLUMN = 0;
     private int SALARY_COLUMN = 0;
+    private int SSN_COLUMN = 0;
     private String dShow;
 
     private JButton Search_Button = new JButton("검색");
@@ -43,6 +44,7 @@ public class Company extends JFrame implements ActionListener {
     JScrollPane ScPane;
     private JLabel Emplabel = new JLabel("선택한 직원: ");
     private JLabel ShowSelectedEmp = new JLabel();
+    private JButton ShowEmpDepend_Button = new JButton("선택한 직원의 가족 보기");
     private JLabel Setlabel = new JLabel("새로운 Salary: ");
     private JTextField setSalary = new JTextField(10);
     private JButton Update_Button = new JButton("UPDATE");
@@ -52,8 +54,8 @@ public class Company extends JFrame implements ActionListener {
     public Company() {
 
         JPanel ComboBoxPanel = new JPanel();
-        String[] category = { "전체", "부서별" };
-        String[] dept = { "Research", "Administration", "Headquarters" };
+        String[] category = {"전체", "부서별"};
+        String[] dept = {"Research", "Administration", "Headquarters"};
         Category = new JComboBox(category);
         Dept = new JComboBox(dept);
         ComboBoxPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -82,6 +84,10 @@ public class Company extends JFrame implements ActionListener {
         ShowSelectedPanel.add(Emplabel);
         ShowSelectedPanel.add(ShowSelectedEmp);
 
+        JPanel ShowEmpDependPanel = new JPanel();
+        ShowEmpDependPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        ShowEmpDependPanel.add(ShowEmpDepend_Button);
+
         JPanel TotalPanel = new JPanel();
         TotalPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         TotalPanel.add(totalEmp);
@@ -101,6 +107,7 @@ public class Company extends JFrame implements ActionListener {
         Top.setLayout(new BoxLayout(Top, BoxLayout.Y_AXIS));
         Top.add(ComboBoxPanel);
         Top.add(CheckBoxPanel);
+        Top.add(ShowEmpDependPanel);
 
         JPanel Halfway = new JPanel();
         Halfway.setLayout(new BoxLayout(Halfway, BoxLayout.X_AXIS));
@@ -121,6 +128,7 @@ public class Company extends JFrame implements ActionListener {
         add(ShowVertical, BorderLayout.SOUTH);
 
         Search_Button.addActionListener(this);
+        ShowEmpDepend_Button.addActionListener(this);
         Delete_Button.addActionListener(this);
         Update_Button.addActionListener(this);
 
@@ -250,7 +258,10 @@ public class Company extends JFrame implements ActionListener {
                         NAME_COLUMN = i;
                     } else if (Head.get(i) == "SALARY") {
                         SALARY_COLUMN = i;
+                    } else if (Head.get(i) == "SSN") {
+                        SSN_COLUMN = i;
                     }
+
                 }
                 table = new JTable(model) {
                     @Override
@@ -265,7 +276,6 @@ public class Company extends JFrame implements ActionListener {
                 ShowSelectedEmp.setText(" ");
 
                 try {
-
                     count = 1;
                     s = conn.createStatement();
                     r = s.executeQuery(stmt);
@@ -284,11 +294,12 @@ public class Company extends JFrame implements ActionListener {
                     }
                     totalCount.setText(String.valueOf(rowCnt));
 
+
                 } catch (SQLException ee) {
                     System.out.println("actionPerformed err : " + ee);
                     ee.printStackTrace();
-
                 }
+
                 panel = new JPanel();
                 ScPane = new JScrollPane(table);
                 table.getModel().addTableModelListener(new CheckBoxModelListener());
@@ -300,9 +311,67 @@ public class Company extends JFrame implements ActionListener {
             } else {
                 JOptionPane.showMessageDialog(null, "검색 항목을 한개 이상 선택하세요.");
             }
-
         }
 
+        if (e.getSource() == ShowEmpDepend_Button) {
+            Vector<String> ShowEmpDependent = new Vector<String>();
+            String showEmpDependentStmt = "";
+            try {
+                count = 1;
+                String columnName = model.getColumnName(2);
+                if (columnName == "SSN") {
+                    for (int i = 0; i < table.getRowCount(); i++) {
+                        if (table.getValueAt(i, 0) == Boolean.TRUE) {
+                            ShowEmpDependent.add((String) table.getValueAt(i, 2));
+                        }
+                    }
+                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
+                        for (int k = 0; k < model.getRowCount(); k++) {
+                            if (table.getValueAt(k, 0) == Boolean.TRUE) {
+                                model.removeRow(k);
+                                totalCount.setText(String.valueOf(table.getRowCount()));
+                            }
+                        }
+                    }
+                    for (int i = 0; i < ShowEmpDependent.size(); i++) {
+                        showEmpDependentStmt = "SELECT * FROM DEPENDENT WHERE Essn=?";
+                        PreparedStatement p = conn.prepareStatement(showEmpDependentStmt);
+                        p.clearParameters();
+                        p.setString(1, String.valueOf(ShowEmpDependent.get(i)));
+                        //s = conn.createStatement();
+                        r = p.executeQuery();
+                    }
+
+                    ResultSetMetaData rsmd = r.getMetaData();
+                    int columnCnt = rsmd.getColumnCount();
+                    int rowCnt = table.getRowCount();
+
+                    while (r.next()) {
+                        Vector<Object> tuple = new Vector<Object>();
+                        tuple.add(false);
+                        for (int i = 1; i < columnCnt + 1; i++) {
+                            tuple.add(r.getString(rsmd.getColumnName(i)));
+                        }
+                        model.addRow(tuple);
+                        rowCnt++;
+                    }
+                    totalCount.setText(String.valueOf(rowCnt));
+                }
+            }catch(SQLException ee){
+                System.out.println("actionPerformed err : " + ee);
+                ee.printStackTrace();
+            }
+            panel = new JPanel();
+            ScPane = new JScrollPane(table);
+            table.getModel().addTableModelListener(new CheckBoxModelListener());
+            ScPane.setPreferredSize(new Dimension(1100, 400));
+            panel.add(ScPane);
+            add(panel, BorderLayout.CENTER);
+            revalidate();
+
+        }else if (model.getColumnName(2) != "SSN"){
+                JOptionPane.showMessageDialog(null, "가족 검색을 위해서는 SSN을 체크해주세요");
+        }
         // DELETE
         if (e.getSource() == Delete_Button) {
             Vector<String> delete_ssn = new Vector<String>();
@@ -349,6 +418,8 @@ public class Company extends JFrame implements ActionListener {
             add(panel, BorderLayout.CENTER);
             revalidate();
 
+
+
         } // DELETE 끝
 
         // UPDATE
@@ -372,7 +443,6 @@ public class Company extends JFrame implements ActionListener {
                         p.setString(1, updateSalary);
                         p.setString(2, String.valueOf(update_ssn.get(i)));
                         p.executeUpdate();
-
                     }
                 } else {
                     JOptionPane.showMessageDialog(null, "수정 작업을 진행하시려면 검색 항목을 모두 체크해주세요.");
