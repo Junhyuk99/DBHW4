@@ -294,7 +294,6 @@ public class Company extends JFrame implements ActionListener {
                     }
                     totalCount.setText(String.valueOf(rowCnt));
 
-
                 } catch (SQLException ee) {
                     System.out.println("actionPerformed err : " + ee);
                     ee.printStackTrace();
@@ -306,7 +305,7 @@ public class Company extends JFrame implements ActionListener {
                 ScPane.setPreferredSize(new Dimension(1100, 400));
                 panel.add(ScPane);
                 add(panel, BorderLayout.CENTER);
-                revalidate();
+                //revalidate();
 
             } else {
                 JOptionPane.showMessageDialog(null, "검색 항목을 한개 이상 선택하세요.");
@@ -317,7 +316,6 @@ public class Company extends JFrame implements ActionListener {
             Vector<String> ShowEmpDependent = new Vector<String>();
             String showEmpDependentStmt = "";
             try {
-                count = 1;
                 String columnName = model.getColumnName(2);
                 if (columnName == "SSN") {
                     for (int i = 0; i < table.getRowCount(); i++) {
@@ -342,15 +340,15 @@ public class Company extends JFrame implements ActionListener {
                         r = p.executeQuery();
                     }
 
-                    ResultSetMetaData rsmd = r.getMetaData();
-                    int columnCnt = rsmd.getColumnCount();
+                    ResultSetMetaData rsmd2 = r.getMetaData();
+                    int columnCnt = rsmd2.getColumnCount();
                     int rowCnt = table.getRowCount();
 
                     while (r.next()) {
                         Vector<Object> tuple = new Vector<Object>();
                         tuple.add(false);
                         for (int i = 1; i < columnCnt + 1; i++) {
-                            tuple.add(r.getString(rsmd.getColumnName(i)));
+                            tuple.add(r.getString(rsmd2.getColumnName(i)));
                         }
                         model.addRow(tuple);
                         rowCnt++;
@@ -367,7 +365,7 @@ public class Company extends JFrame implements ActionListener {
             ScPane.setPreferredSize(new Dimension(1100, 400));
             panel.add(ScPane);
             add(panel, BorderLayout.CENTER);
-            revalidate();
+            //revalidate();
 
         }else if (model.getColumnName(2) != "SSN"){
                 JOptionPane.showMessageDialog(null, "가족 검색을 위해서는 SSN을 체크해주세요");
